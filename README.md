@@ -1,4 +1,4 @@
 StreamingServer
 ===============
 
-Open Source Streaming Server
+Open Source Streaming Server from Apple
