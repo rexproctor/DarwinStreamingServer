@@ -1,0 +1,69 @@
+progress: to 393
+
+$debug: for debug
+
+* debug activeState Kmodo
+
+
+* discrete data structure:
+$conf
+$defaultConfigPath
+	C:/Program Files/Darwin Streaming Server/streamingadminserver.conf
+
+
+* vital -- 189
+this vital info is put into $config if not defined.
+
+%vital = ("port", 1220,
+	  "sslport", 1240,
+	  "root", "C:/Program Files/Darwin Streaming Server/AdminHtml",
+	  "plroot", "C:\\Program Files\\Darwin Streaming Server\\Playlists\\",
+	  "server", "QTSS 5.5 Admin Server/1.0",
+	  "index_docs", "index.html parse_xml.cgi index.htm index.cgi",
+	  "addtype_html", "text/html",
+      "addtype_htm", "text/html",
+	  "addtype_txt", "text/plain",
+	  "addtype_gif", "image/gif",
+	  "addtype_jpg", "image/jpeg",
+	  "addtype_jpeg", "image/jpeg",
+	  "addtype_cgi", "internal/cgi",
+	  "addtype_mov", "video/quicktime",
+	  "addtype_js", "application/x-javascript",
+	  "realm", "QTSS Admin Server",
+	  "qtssIPAddress", "localhost",
+	  "qtssPort", "554",
+	  "qtssName", "C:/Program Files/Darwin Streaming Server/DarwinStreamingServer.exe",
+	  "qtssAutoStart", "1",
+      "logfile", "C:/Program Files/Darwin Streaming Server/Logs/streamingadminserver.log",
+	  "log", "1",
+	  "logclear", "0",
+	  "logtime", "168",
+	  "messagesfile", "messages",
+	  "gbrowse", "0",
+	  "ssl", "0",
+	  "crtfile", "C:/Program Files/Darwin Streaming Server/streamingadminserver.pem",
+	  "keyfile", "C:/Program Files/Darwin Streaming Server/streamingadminserver.pem",
+	  #"keypasswordfile", "",
+	  "qtssQTPasswd", "C:/Program Files/Darwin Streaming Server/qtpasswd.exe",
+	  "qtssPlaylistBroadcaster", "c:\\Program Files\\Darwin Streaming Server\\PlaylistBroadcaster.exe",
+	  "qtssMP3Broadcaster", "c:\\Program Files\\Darwin Streaming Server\\MP3Broadcaster.exe",
+	  "helpurl", "http://helpqt.apple.com/dssWebAdminHelpR3/dssWebAdmin.help/DSSHelp.htm",
+	  "qtssAdmin", "streamingadmin",
+  	  "cacheMessageFiles", "0",
+	  #"pidfile", "C:/Program Files/Darwin Streaming Server/streamingadminserver.pid"
+	  );
+
+* Message
+
+Message is handled in 
+           sub LoadMessageHashes
+
+  $messagesfile{"en"}
+  $messagesfile{"de"}
+  $messagesfile{"fr"}
+  $messagesfile{"jp"}
+       D:\GitHub\DSS-Perl\AdminHtml\html_en\messages
+
+  $messages{$lang}->{$keywore}=$messageStr;
+
+
