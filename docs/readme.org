@@ -1,0 +1,2 @@
+Debugging Perl CGI: http://stackoverflow.com/questions/10453302/debugging-perl-cgi
+Perl vs Komodo: http://wiki.dandascalescu.com/reviews/software/komodo_vs_eclipse

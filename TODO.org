@@ -1,0 +1,26 @@
+* TODO
+** merge in local modifications (optimization level, etc)
+** test in clean machine
+** merge in new module
+** add my documents
+
+* DONE
+------------------------------------------------------------------------
+** Date: 1/20/2015
+Version: v6.0.3
+Tag: v6.0.3
+
+fix streaming server unable to build issue by apply patches
+
+#wget http://download1641.mediafire.com/730178zs093g/6s9tn9xxbmv9ems/install.sh
+#wget http://download1508.mediafire.com/4lxu8xmlonhg/6gb1jb49so8mbsq/dsshh-20080728-1.patch
+#wget http://download1506.mediafire.com/rd1nc6426chg/7qsk1wogo0ix081/dss-6.0.3.patch.txt
+rename the patch files by removing dsshh-20080728-1.patch.txt extension and rename to dsshh-20080728-1.patch
+
+#cd DarwinStreamingSrvr6.0.3-Source
+#patch -p1 < dss-6.0.3.patch
+#patch -p1 < dss-hh-20080728-1.patch
+#sudo groupadd qtss
+#sudo useradd qtss -g qtss
+#./Buildit
+
