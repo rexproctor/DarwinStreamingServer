@@ -1,15 +1,19 @@
 progress: to 393
 
-$debug: for debug
-
 * debug activeState Kmodo
 
 
 * discrete data structure:
+$debug: for debug
+$ssl_available
+
+# ====================================
 $conf
 $defaultConfigPath
 	C:/Program Files/Darwin Streaming Server/streamingadminserver.conf
-
+$perl_path: /usr/bin/perl
+$streamingadminserver_path:  path of this server
+    
 
 * vital -- 189
 this vital info is put into $config if not defined.
