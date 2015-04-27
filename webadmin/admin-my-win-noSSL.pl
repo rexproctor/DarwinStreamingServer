@@ -267,9 +267,8 @@ $proto = getprotobyname('tcp');  #6
 $baddr = $config{"bind"} ? inet_aton($config{"bind"}) : INADDR_ANY;
 $port = $config{"port"};  #1220
 $servaddr = sockaddr_in($port, $baddr);
-socket(MAIN, PF_INET, SOCK_STREAM, $proto) ||
-	die "Failed to open listening socket for Streaming Admin Server : $!\n";
-setsockopt(MAIN, SOL_SOCKET, SO_REUSEADDR, pack("l", 1));
+socket(MAIN, PF_INET, SOCK_STREAM, $proto) || die "Failed to open listening socket for Streaming Admin Server : $!\n";
+setsockopt(MAIN, SOL_SOCKET, SO_REUSEADDR, pack("l", 1)); #unsigned long, refer to http://www.tutorialspoint.com/perl/perl_pack.htm
 bind(MAIN, $servaddr) || die "Failed to start Streaming Admin Server.\n"
 								. "Port $config{port} is in use by another process.\n"
 								. "The Streaming Admin Server may already be running.\n";  
@@ -282,9 +281,8 @@ listen(MAIN, SOMAXCONN) || die "Failed to listen on socket for Streaming Admin S
 if ($ssl_available) { #No
 	$sslport = $config{"sslport"};
 	$servssladdr = sockaddr_in($sslport, $baddr);
-	socket(SSLMAIN, PF_INET, SOCK_STREAM, $proto) ||
-		die "Failed to open ssl listening socket for Streaming Admin Server : $!\n";
-	setsockopt(SSLMAIN, SOL_SOCKET, SO_REUSEADDR, pack("l", 1));
+	socket(SSLMAIN, PF_INET, SOCK_STREAM, $proto) || die "Failed to open ssl listening socket for Streaming Admin Server : $!\n";
+	setsockopt(SSLMAIN, SOL_SOCKET, SO_REUSEADDR, pack("l", 1));  #unsigned long, refer to http://www.tutorialspoint.com/perl/perl_pack.htm
 	bind(SSLMAIN, $servssladdr) || die "Failed to start Streaming Admin Server.\n"
 									. "SSL Port $config{port} is in use by another process.\n"
 									. "The Streaming Admin Server may already be running.\n";  
@@ -443,6 +441,7 @@ sub handle_request {
     # if request came over ssl port but ssl is off, redirect to non-ssl request
     if($sslrequest && !$use_ssl) { &http_redirect(0, $host, $port, $request_uri); } #no
 	
+#parse http header
     %header = ();
     local $lastheader;
 	while(1) {
@@ -463,7 +462,7 @@ sub handle_request {
 		} else { $host = $header{'host'}; }
     }
     
-    # Set defaults so that english html can be sent if the accept-language header is not given
+# Set defaults language: so that english html can be sent if the accept-language header is not given
     my $langDir = $config{"root"} . "/html_en";  # C:/Program Files/Darwin Streaming Server/AdminHtml/html_en
     my $language = "en";
     
@@ -484,20 +483,18 @@ sub handle_request {
 		}
     }
     
-    $querystring = '';
-    
-    undef(%in);
-    if ($page =~ /^([^\?]+)\?(.*)$/) {
-		# There is some query string information
+# parse query string => %in	
+    $querystring = '';    
+    undef(%in);  #http://www.a.com/s/ref=nb?url=search%3Daps&keywords=book
+    if ($page =~ /^([^\?]+)\?(.*)$/) { # There is some query string information
 		$page = $1;
 		$querystring = $2;
 		if ($querystring !~ /=/) {
 	    	$queryargs = $querystring;
 	    	$queryargs =~ s/\+/ /g;
-	    	$queryargs =~ s/%(..)/pack("c",hex($1))/ge;
+	    	$queryargs =~ s/%(..)/pack("c",hex($1))/ge; # e modifier is to evaluate pack("c",hex($1)) : refer to http://www.tutorialspoint.com/perl/perl_pack.htm			
 	    	$querystring = "";
-		} else {
-			# Parse query-string parameters
+		} else { # Parse query-string parameters
 			local @in = split(/\&/, $querystring);
 			foreach $i (@in) {
 				local ($k, $v) = split(/=/, $i, 2);
@@ -508,6 +505,7 @@ sub handle_request {
 		}
     }
 
+#handle POST data
 	$posted_data = undef;
 	if ($method eq 'POST' &&
     	$header{'content-type'} eq 'application/x-www-form-urlencoded') {
@@ -523,17 +521,15 @@ sub handle_request {
 		local @in = split(/\&/, $posted_data);
 		foreach $i (@in) {
 			local ($k, $v) = split(/=/, $i, 2);
-			$k =~ s/\+/ /g; $k =~ s/%(..)/pack("c",hex($1))/ge;
-			$v =~ s/\+/ /g; $v =~ s/%(..)/pack("c",hex($1))/ge;
+			$k =~ s/\+/ /g; $k =~ s/%(..)/pack("c",hex($1))/ge; 
+			$v =~ s/\+/ /g; $v =~ s/%(..)/pack("c",hex($1))/ge; #       
 			$in{$k} = $v;
 		}
 	}
-	
-    # strip NULL characters %00 from the request
-    $page =~ s/%00//ge;
 
-    # replace %XX sequences in page
-    $page =~ s/%(..)/pack("c",hex($1))/ge;
+#handle page url	
+    $page =~ s/%00//ge;      # strip NULL characters %00 from the request
+    $page =~ s/%(..)/pack("c",hex($1))/ge; # replace %XX sequences in page
   
 	# delete multiple dots
 	while ($page =~ m/\.{2,}/) {
@@ -551,30 +547,30 @@ sub handle_request {
 	
 	#prevent windows ports from being opened
 	#aux, con, prn, com*, lpt?, nul
-	$superDir = $config{'root'};
+	$superDir = $config{'root'};  #C:/Program Files/Darwin Streaming Server/AdminHtml
 	$foundFilename = 0;
 	$lastPathComponent = '';
 	if ($page =~ m/\/([^\/]+)$/) {
 		$lastPathComponent = $1;
 	}
-	if (opendir(FILEDIR, $superDir)) {
+	if (opendir(FILEDIR, $superDir)) {   #/AdminHtml
 		while (defined($subpath = readdir(FILEDIR))) {
 			$foundFilename = 1 if $subpath eq $lastPathComponent;
 		}
 	}
-	if ($foundFilename == 0 && opendir(FILEDIR, "$superDir/images")) {
+	if ($foundFilename == 0 && opendir(FILEDIR, "$superDir/images")) { #/AdminHtml/images
 		while (defined($subpath = readdir(FILEDIR))) {
 			$foundFilename = 1 if $subpath eq $lastPathComponent;
 		}
 	}
-	if ($foundFilename == 0 && opendir(FILEDIR, "$superDir/includes")) {
+	if ($foundFilename == 0 && opendir(FILEDIR, "$superDir/includes")) { #/AdminHtml/include
 		while (defined($subpath = readdir(FILEDIR))) {
 			$foundFilename = 1 if $subpath eq $lastPathComponent;
 		}
 	}
 	$page = '/' if $foundFilename == 0;
 
-    # check address against access list
+# check address against access list
     if (@deny && &ip_match($acptip, @deny) ||
 		@allow && !&ip_match($acptip, @allow)) {
 		&http_error(403, "Access denied for $acptip");
@@ -588,7 +584,7 @@ sub handle_request {
 		return 0;
     }
 
-    # check for the logout flag file, and if existant deny authentication once
+# check for the logout flag file, and if existant deny authentication once
     if ($config{'logout'} && -r $config{'logout'}) {
 		&write_data("HTTP/1.0 401 Unauthorized\r\n");
 		&write_data("Server: $config{server}\r\n");
@@ -607,7 +603,7 @@ sub handle_request {
 		return 0;
     }
 
-    # Check for password if needed
+# Check for password if needed
     if (%users) {
 		$validated = 0;
 		
@@ -666,14 +662,13 @@ sub handle_request {
 		}	
     }
     
+
     # Figure out what kind of page was requested
     $simple = &simplify_path($page, $bogus);
-    if ($bogus) {
-		&http_error(400, "Invalid path");
-    }
-    $sofar = ""; $full = $config{"root"} . $sofar;
+    if ($bogus) {  &http_error(400, "Invalid path");  }
+    $sofar = ""; $full = $config{"root"} . $sofar; #C:/Program Files/Darwin Streaming Server/AdminHtml
     $scriptname = $simple;
-    foreach $b (split(/\//, $simple)) {
+    foreach $b (split(/\//, $simple)) { #first time skip
 		if ($b ne "") { $sofar .= "/$b"; }
 		$full = $config{"root"} . $sofar;
 		@st = stat($full);
@@ -709,8 +704,8 @@ sub handle_request {
 		return 0;
     }
 
-    # Reached the end of the path OK.. see what we've got
-    if (-d $full) {
+# get $idx_full, Reached the end of the path OK.. see what we've got
+    if (-d $full) {#C:/dss/AdminHtml
     	# See if the URL ends with a / as it should
 		if ($page !~ /\/$/) {
 	    	# It doesn't.. redirect
@@ -725,26 +720,23 @@ sub handle_request {
 	    	&log_request($acptip, $authuser, $reqline, 302, 0);
 	    	return 0;
 		}
-		# A directory.. check for index files
-		foreach $idx (split(/\s+/, $config{'index_docs'})) {
-	    	$idxfull = "$full/$idx";
+		# A directory.. check for index files, dss/AdminHtml/parse_xml.cgi
+		foreach $idx (split(/\s+/, $config{'index_docs'})) {#index.html parse_xml.cgi index.htm index.cgi
+	    	$idxfull = "$full/$idx";  #C:/dss/AdminHtml/parse_xml.cgi
 	    	if (-r $idxfull && !(-d $idxfull)) {
 				$full = $idxfull;
 				$scriptname .= "/" if ($scriptname ne "/");
 				last;
 		    }
-		}
-    }
+		} #foreach $idx
+    }# if (-d $full)
 
-    if (-d $full) {
-		# A directory should NOT be listed.
-		# Instead a 404 should be returned
-		&http_error(404, "File not found");
-		
+    if (-d $full) { # A directory should NOT be listed. 
+		&http_error(404, "File not found");  # Instead a 404 should be returned
 		return 0;
     }
 
-    # CGI or normal file
+# CGI or normal file
     local $rv;
     if (&get_type($full) eq "internal/cgi") {
 		# A CGI program to execute
@@ -825,10 +817,10 @@ sub handle_request {
 	
 		# Check if the CGI can be handled internally
 		open(CGI, $full);
-		local $first = <CGI>;
+		local $first = <CGI>; #!/usr/bin/perl
 		close(CGI);
 		$perl_cgi = 0;
-		if ($^O eq "MSWin32") {
+		if ($^O eq "MSWin32") { #YES
 		    if ($first =~ m/^#!(.*)perl$/i) {
 				$perl_cgi = 1;
 				undef($postinput);
@@ -839,11 +831,11 @@ sub handle_request {
 				$perl_cgi = 1;
 	    	}
 		}
-		if($perl_cgi == 1) {
+		if($perl_cgi == 1) { #YES
 	    	# setup environment for eval
 	    	chdir($ENV{"PWD"});
 	    	@ARGV = split(/\s+/, $queryargs);
-	    	$0 = $full;
+	    	$0 = $full; # $0 contains the name of program being run
 	    	if ($posted_data) {
 				# Already read the post input
 				$postinput = $posted_data;
@@ -859,8 +851,8 @@ sub handle_request {
 				}
 	    	}
 	    
-	    	if ($config{'log'}) {
-				open(QTSSADMINSERVERLOG, ">>$config{'logfile'}");
+	    	if ($config{'log'}) { #1
+				open(QTSSADMINSERVERLOG, ">>$config{'logfile'}"); #dss/logs/streamingserver.log
 				chmod(0600, $config{'logfile'});
 	    	}
 	    	# set doneheaders = 1 so that the cgi spits out all the headers
@@ -871,7 +863,7 @@ sub handle_request {
 				package main;
 				tie(*STDOUT, 'streamingadminserver');
 				tie(*STDIN, 'streamingadminserver');
-				do $streamingadminserver::full;
+				do $streamingadminserver::full;	# run parse_xml.cgi
 				die $@ if ($@);
 	    	};
 	    	$doing_eval = 0;
